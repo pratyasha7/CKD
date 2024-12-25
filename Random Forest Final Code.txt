@@ -1,0 +1,98 @@
+Random Forest Final Code
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+# Load the dataset
+data = pd.read_excel(r"C:\Users\Pratyasha\OneDrive\Documents\ckd_dataset2.xlsx")
+
+# Display the first few rows of the dataset
+print("First 5 rows of the dataset:")
+print(data.head())
+
+# Preprocessing the data
+X = data.iloc[:, :-1]  # Features
+y = data.iloc[:, -1]   # Target variable
+
+# Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Create a Random Forest Classifier
+rf_classifier = RandomForestClassifier(n_estimators=100, random_state=42)
+
+# Train the model
+rf_classifier.fit(X_train, y_train)
+
+# Make predictions
+y_pred = rf_classifier.predict(X_test)
+
+# Calculate accuracy
+accuracy = accuracy_score(y_test, y_pred)
+print(f"\nModel Accuracy: {accuracy:.2f}")
+
+# Evaluate the model
+print("\nConfusion Matrix:")
+cm = confusion_matrix(y_test, y_pred)
+print(cm)
+
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+# 2D Visualization of Confusion Matrix using Matplotlib
+plt.figure(figsize=(8, 6))
+plt.imshow(cm, interpolation='nearest', cmap='Blues')
+plt.title('Confusion Matrix')
+plt.colorbar()
+tick_marks = [0, 1]
+plt.xticks(tick_marks, ['No CKD', 'CKD'])
+plt.yticks(tick_marks, ['No CKD', 'CKD'])
+plt.xlabel('Predicted Label')
+plt.ylabel('Actual Label')
+
+# Adding text labels inside the confusion matrix cells
+thresh = cm.max() / 2.0
+for i, j in zip(*cm.nonzero()):
+    plt.text(j, i, format(cm[i, j], 'd'),
+             horizontalalignment="center",
+             color="white" if cm[i, j] > thresh else "black")
+
+plt.show()
+
+# Feature Importance Analysis
+try:
+    importances = rf_classifier.feature_importances_
+    feature_names = X.columns
+    feature_importance = pd.DataFrame({'Feature': feature_names, 'Importance': importances})
+    feature_importance = feature_importance.sort_values(by='Importance', ascending=False)
+
+    # Print feature importance scores
+    print("\nFeature Importances:")
+    print(feature_importance)
+
+    # 2D Bar Plot for Feature Importance
+    plt.figure(figsize=(10, 6))
+    sns.barplot(x='Importance', y='Feature', data=feature_importance, palette='viridis')
+    plt.title('Feature Importance in Random Forest Classifier')
+    plt.xlabel('Importance Score')
+    plt.ylabel('Features')
+    plt.show()
+
+except AttributeError:
+    print("\nError: Feature importances could not be retrieved. Ensure that the RandomForestClassifier was fitted correctly.")
+except Exception as e:
+    print(f"\nAn unexpected error occurred while calculating feature importances: {e}")
+
+# Actual vs. Predicted Output Graph
+plt.figure(figsize=(10, 6))
+plt.scatter(range(len(y_test)), y_test, color='blue', alpha=0.6, label='Actual', marker='o')
+plt.scatter(range(len(y_pred)), y_pred, color='orange', alpha=0.6, label='Predicted', marker='x')
+plt.title('Actual vs Predicted CKD Status')
+plt.xlabel('Sample Index')
+plt.ylabel('CKD Status (0 = No CKD, 1 = CKD)')
+plt.legend()
+plt.grid(True)
+plt.show()
